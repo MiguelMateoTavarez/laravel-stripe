@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\User;
 use Stripe\Customer;
 use Stripe\Stripe;
 
@@ -10,18 +11,24 @@ class StripeUserService
 
     public function __construct()
     {
-        Stripe::setApiKey(env('STRIPE_SECRET'));
+        Stripe::setApiKey(config('services.stripe.secret'));
     }
 
     public function createUserInStripe($data)
     {
         if(!$this->userExists($data)) {
-            $customer = Customer::create([
-                'name' => $data->name,
-                'email' => $data->email,
-            ]);
+            $user = User::create($data->all());
+            return $user->createAsStripeCustomer();
+        }
 
-            return $customer;
+        return 'Customer already exists';
+    }
+
+    public function updateUserInStripe($data, $user)
+    {
+        if($this->userExists($data)) {
+            $user->update($data->all());
+            return $user->updateStripeCustomer($data->all());
         }
 
         return 'Customer already exists';
