@@ -23,4 +23,5 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::prefix('stripe')->group(function () {
     Route::post('/webhooks', [StripeWebhookController::class, 'handleWebhook']);
     Route::post('/registerCustomer', [StripeCustomerController::class, 'store']);
+    Route::put('/updateCustomer/{user}', [StripeCustomerController::class, 'update'])->middleware('checkuserexists');
 });

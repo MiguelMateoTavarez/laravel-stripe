@@ -31,8 +31,8 @@ class StripeCustomerController extends Controller
         $response = $this->stripeUserService->createUserInStripe($user);
 
         return is_string($response)
-            ? response()->json(['message' => $response])
-            : response()->json($response);
+            ? response()->json(['message' => $response], 409)
+            : response()->json($response, 201);
     }
 
     /**
@@ -48,7 +48,11 @@ class StripeCustomerController extends Controller
      */
     public function update(Request $request, User $user)
     {
-        //
+        $response = $this->stripeUserService->updateUserInStripe($request, $user);
+
+        return is_string($response)
+            ? response()->json(['message' => $response], 404)
+            : response()->json($response, 201);
     }
 
     /**
