@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use Laravel\Cashier\Cashier;
 use Stripe\Customer;
 use Stripe\Stripe;
 
@@ -14,33 +15,36 @@ class StripeUserService
         Stripe::setApiKey(config('services.stripe.secret'));
     }
 
-    public function createUserInStripe($data)
+    public function createUserInStripe($request)
     {
-        if(!$this->userExists($data)) {
-            $user = User::create($data->all());
+        if (!$this->userExists($request)) {
+            $user = User::create($request->all());
             return $user->createAsStripeCustomer();
         }
 
         return 'Customer already exists';
     }
 
-    public function updateUserInStripe($data, $user)
+    public function updateUserInStripe($request, $user)
     {
-        if($this->userExists($data)) {
-            $user->update($data->all());
-            return $user->updateStripeCustomer($data->all());
-        }
+        $updatedUser = $user->updateStripeCustomer($request->all());
+        $user->update($request->all());
 
-        return 'Customer already exists';
+        return $updatedUser;
     }
 
-    private function userExists($data)
+    private function userExists($request)
     {
-        $verifyingCustomer = Customer::all([
-            'email' => $data->email,
-            'limit' => 1,
-        ]);
+        $verifyingCustomer = $this->findUserByEmail($request->email);
 
         return $verifyingCustomer->count() > 0 ? true : false;
+    }
+
+    public function findUserByEmail($email)
+    {
+        return Customer::all([
+            'email' => $email,
+            'limit' => 1,
+        ]);
     }
 }
